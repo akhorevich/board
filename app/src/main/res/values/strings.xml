@@ -13,4 +13,11 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <array name="types">
+        <item>Urgent and important</item>
+        <item>Urgent and not important</item>
+        <item>Not urgent and important</item>
+        <item>Not urgent and not important</item>
+    </array>
 </resources>
