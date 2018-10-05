@@ -9,6 +9,12 @@ class Task {
     long date;
     Type type;
 
+    public Task(String name, long date, Type type) {
+        this.name = name;
+        this.date = date;
+        this.type = type;
+    }
+
     public String getName() {
         return name;
     }

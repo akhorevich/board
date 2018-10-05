@@ -5,11 +5,23 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import az.plainpie.PieView;
 import butterknife.BindView;
@@ -35,8 +47,13 @@ public class BoardFragment extends Fragment {
     @BindView(R.id.tasks4) TextView mTasks4;
 
     String name;
+    EditText ed;
+
 
     Unbinder mUnbinder;
+
+    private DatabaseReference mDatabase;
+
 
     public BoardFragment() {
         // Required empty public constructor
@@ -54,12 +71,14 @@ public class BoardFragment extends Fragment {
     @OnClick(R.id.add) void OnAdd(){
         final AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
         LayoutInflater inflater = this.getLayoutInflater();
-        dialog.setView(inflater.inflate(R.layout.add_dialog, null));
+        View dialogView = inflater.inflate(R.layout.add_dialog, null);
+        dialog.setView(dialogView);
         dialog.setTitle("Add new task");
+        ed = dialogView.findViewById(R.id.title);
         dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-
+                addTask(ed.getText().toString());
             }
         });
         dialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -82,6 +101,8 @@ public class BoardFragment extends Fragment {
             name = getArguments().getString(NAME);
             ((TaskActivity)getActivity()).getSupportActionBar().setSubtitle(name);
         }
+        mDatabase = FirebaseDatabase.getInstance().getReference("board");
+
 
         mPieView1.setPercentageBackgroundColor(getResources().getColor(R.color.red));
         mPieView2.setPercentageBackgroundColor(getResources().getColor(R.color.blue));
@@ -98,5 +119,26 @@ public class BoardFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         mUnbinder.unbind();
+    }
+
+    private void addTask(final String message){
+        mDatabase.child("board").child(name).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Board board = dataSnapshot.getValue(Board.class);
+                List<Task> tasks = board.getTasks() != null ? board.getTasks() : new ArrayList<Task>();
+                Task task = new Task(message, System.currentTimeMillis(),Task.Type.IN);
+                tasks.add(task);
+                board.setTasks(tasks);
+                Map<String, Object> boardValues = board.toMap();
+                mDatabase.updateChildren(boardValues);
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
     }
 }
